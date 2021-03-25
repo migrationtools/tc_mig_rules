@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<ruleset id="weblogic_Tomcat_migration_JNDI_resources"
+         xmlns="http://windup.jboss.org/schema/jboss-ruleset"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://windup.jboss.org/schema/jboss-ruleset http://windup.jboss.org/schema/jboss-ruleset/windup-jboss-ruleset.xsd">
+    <metadata>
+        <description>
+            This ruleset provides JDNI rules match when migrating from Weblogic to Tomcat server
+        </description>
+        <dependencies>
+            <addon id="org.jboss.windup.rules,windup-rules-javaee,2.4.0.Final"/>
+            <addon id="org.jboss.windup.rules,windup-rules-java,2.4.0.Final"/>
+        </dependencies>
+        <sourceTechnology id="weblogic"/>
+        <targetTechnology id="tomcat"/>
+    </metadata>
+    <rules>
+    
+            <rule id="weblogic-tomcat-wlinit-01000">
+                <when>
+                    <filecontent filename="{*}.{ext}" pattern="weblogic.jndi.WLInitialContextFactory" />
+                </when>
+                <perform>
+                    <hint title="WebLogic InitialContextFactory" effort="3" category-id="mandatory">
+                        <message>
+                        <![CDATA[
+                        `weblogic.jndi.WLInitialContextFactory` is an implementation of `InitialContextFactory` used to get object instances from JNDI.
+    
+                        The equivalent functionality needs to be configured on Tomcat context.xml. Then the context could be instanticated as follows: `InitialContext ctx = new InitialContext();`.
+                        ]]>
+                        </message>
+                        <link href="https://tomcat.apache.org/tomcat-9.0-doc/jndi-resources-howto.html" title="Tomcat - JNDI Reference"/>
+                        <tag>configuration</tag>
+                        <tag>weblogic</tag>
+                    </hint>
+                </perform>
+                <where param="ext">
+                    <matches pattern="(java|properties|xml)" />
+                </where>
+            </rule>
+		<rule id="weblogic-tomcat-wl-classref-01001">
+		    <when>
+			<javaclass references="weblogic.{*}">
+			    <location>IMPORT</location>
+			</javaclass>
+		    </when>
+		    <perform>
+			 <hint title="Weblogic Class Reference" effort="5" category-id="mandatory">
+			     <message>
+			       <![CDATA[
+			       There is reference to a weblogic library class.  When migrating to tomcat, you need to identify suitable replacment for the functionality provided by this class.
+			       ]]>
+			     </message>
+			     <tag>classloader</tag>
+			 </hint>
+		    </perform>
+		</rule>
+
+		<rule id="weblogic_Tomcat_migration_JNDI_resources-00003">
+		    <when>
+			<javaclass references="java.lang.Class.forName({*}">
+			    <location>METHOD_CALL</location>
+			</javaclass>
+		    </when>
+		    <perform>
+			 <hint title="Dynamic class instantiation" effort="1" category-id="mandatory">
+			     <message>
+			       <![CDATA[
+			       The class is dynamically loaded within application. During the migration, multiple classes that are provided on classpath by a different server may not be present anymore.
+
+			       Please review the class-loading mechanisms and ensure that the dynamically loaded class is available in Tomcat.
+			       ]]>
+			     </message>
+			     <link title="Class Loading and Modules in Tomcat" href="https://tomcat.apache.org/tomcat-8.0-doc/class-loader-howto.html"/>
+			     <tag>classloader</tag>
+			 </hint>
+		    </perform>
+		</rule>
+    </rules>
+</ruleset>
+

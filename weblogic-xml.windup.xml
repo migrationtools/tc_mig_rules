@@ -1,0 +1,239 @@
+<?xml version="1.0"?>
+<ruleset id="weblogic_xml_descriptor_01000"
+    xmlns="http://windup.jboss.org/schema/jboss-ruleset"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://windup.jboss.org/schema/jboss-ruleset http://windup.jboss.org/schema/jboss-ruleset/windup-jboss-ruleset.xsd">
+    <metadata>
+        <description>
+            This ruleset looks for the elements in a weblogic.xml file, which is not valid in Apache Tomcat
+        </description>
+         <dependencies>
+            <addon id="org.jboss.windup.rules,windup-rules-javaee,2.4.0.Final"/>
+            <addon id="org.jboss.windup.rules,windup-rules-java,2.4.0.Final"/>
+        </dependencies>
+        <sourceTechnology id="weblogic" />
+        <targetTechnology id="tomcat" />
+    </metadata>
+    <rules>
+        <rule id="weblogic-xml-descriptor-context-root-12000" xmlns="http://windup.jboss.org/schema/jboss-ruleset">
+            <when>
+                <xmlfile matches="/bea:weblogic-web-app/bea:context-root | /wlso:weblogic-web-app/wlso:context-root | /wls:weblogic-web-app/wls:context-root | /weblogic-web-app/context-root">
+                    <namespace prefix="wlso" uri="http://xmlns.oracle.com/weblogic/weblogic-web-app"/>
+                    <namespace prefix="bea" uri="http://www.bea.com/ns/weblogic/90"/>
+                    <namespace prefix="wls" uri="http://www.bea.com/ns/weblogic/weblogic-web-app"/>
+                    <namespace prefix="wls" uri="http://xmlns.oracle.com/weblogic/weblogic-application"/>
+                </xmlfile>
+            </when>
+            <perform>
+                <classification category-id="mandatory" effort="3" issue-display-mode="all" title="WebLogic web application descriptor (weblogic.xml) Context Root">
+                    <description><![CDATA[
+                        The Oracle WebLogic Server deployment descriptor file (`weblogic.xml`) provides functionality that is not included in the standard Java EE specification.
+                        While there is no direct mapping of these descriptor elements, many of these features may be configured in the application deployment or Tomcat server configuration files.
+
+						The <context-root> element needs to be replaced with a equivalent element in the ${Tomcat_home}/config/server.xml file
+
+						Change the autoDeploy="false" deployOnStartup="false" under Host element like below. This is must.
+
+						<Host name="localhost"  appBase="webapps"
+								unpackWARs="true" autoDeploy="false" deployOnStartup="false">
+						
+						Add below line under Host element.
+
+						<Context path="" docBase="ServletInAction.war"  reloadable="true">
+							<WatchedResource>WEB-INF/web.xml</WatchedResource>
+						</Context>
+						With the above approach we can add as many applications under webapps with different context path names.
+					]]>
+                    </description>
+                    <link href="https://stackoverflow.com/questions/7276989/how-to-set-the-context-path-of-a-web-application-in-tomcat-7-0" title="Stackover answer on WebLogic to Tomcat mapping"/>
+                    <tag>web-app</tag>
+                    <tag>weblogic</tag>
+					<tag>context-root</tag>
+                </classification>
+            </perform>
+        </rule>
+		<rule id="weblogic-xml-security-role-assignment-12001" xmlns="http://windup.jboss.org/schema/jboss-ruleset">
+            <when>
+                <xmlfile matches="/bea:weblogic-web-app/bea:security-role-assignment | /wlso:weblogic-web-app/wlso:security-role-assignment | /wls:weblogic-web-app/wls:security-role-assignment | /weblogic-web-app/security-role-assignment">
+                    <namespace prefix="wlso" uri="http://xmlns.oracle.com/weblogic/weblogic-web-app"/>
+                    <namespace prefix="bea" uri="http://www.bea.com/ns/weblogic/90"/>
+                    <namespace prefix="wls" uri="http://www.bea.com/ns/weblogic/weblogic-web-app"/>
+                    <namespace prefix="wls" uri="http://xmlns.oracle.com/weblogic/weblogic-application"/>
+                </xmlfile>
+            </when>
+            <perform>
+                <classification category-id="mandatory" effort="3" issue-display-mode="all" title="WebLogic web application descriptor (weblogic.xml) Security Role">
+                    <description><![CDATA[
+                        The Oracle WebLogic Server deployment descriptor file (`weblogic.xml`) provides functionality that is not included in the standard Java EE specification.
+                        While there is no direct mapping of these descriptor elements, many of these features may be configured in the application deployment or Tomcat server configuration files.
+
+                        			For a <security-role-assignment> element in Weblogic similar to
+							<security-role-assignment>
+							<role-name>manager</role-name>
+							<principal-name>manager</principal-name>
+							</security-role-assignment>
+						   
+						can be replaced in Tomcat with an equivalent element like below:-
+						   
+						<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+								   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+								   xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+							  http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+								   version="2.5">
+							<security-role>
+								<role-name>manager</role-name>
+							</security-role>
+							<security-constraint>
+								<web-resource-collection>
+									<web-resource-name>management pages</web-resource-name>
+									<url-pattern>/secure/*</url-pattern>
+									<url-pattern>/mixed/secure3.jsp</url-pattern>
+								</web-resource-collection>
+								<auth-constraint>
+									<role-name>manager</role-name>
+								</auth-constraint>
+							</security-constraint>
+						</web-app>
+					]]>
+                    </description>
+                    <link href="https://www.thecoderscorner.com/team-blog/hosting-servers/17-setting-up-role-based-security-in-tomcat/" title="Setting up role based security in Tomcat"/>
+                    <tag>web-app</tag>
+                    <tag>weblogic</tag>
+					<tag>role-based-security</tag>
+                </classification>
+            </perform>
+        </rule>
+	<rule id="weblogic-xml-session-descriptor-12002" xmlns="http://windup.jboss.org/schema/jboss-ruleset">
+            <when>
+                <xmlfile matches="/bea:weblogic-web-app/bea:session-descriptor | /wlso:weblogic-web-app/wlso:session-descriptor | /wls:weblogic-web-app/wls:session-descriptor | /weblogic-web-app/session-descriptor">
+                    <namespace prefix="wlso" uri="http://xmlns.oracle.com/weblogic/weblogic-web-app"/>
+                    <namespace prefix="bea" uri="http://www.bea.com/ns/weblogic/90"/>
+                    <namespace prefix="wls" uri="http://www.bea.com/ns/weblogic/weblogic-web-app"/>
+                </xmlfile>
+            </when>
+            <perform>
+                <classification category-id="mandatory" effort="3" issue-display-mode="all" title="WebLogic web application descriptor (weblogic.xml) - session descriptor">
+                    <description><![CDATA[
+                        The Oracle WebLogic Server deployment descriptor file (`weblogic.xml`) provides functionality that is not included in the standard Java EE specification.
+                        While there is no direct mapping of these descriptor elements, many of these features may be configured in the application deployment or Tomcat server configuration files.
+
+                        The session-descriptor parameters in Weblogic are not supported in Tomcat
+						
+						<session-descriptor>
+						<session-param>
+							<param-name>TimeoutSecs</param-name>
+							<param-value>3650</param-value>
+						</session-param>
+						</session-descriptor>
+						
+						An equivalent setting in Tomcat is in the web.xml. Search for the session-timeout keyword (include the hyphen) and you will see this section:
+						<session-config>
+							<session-timeout>3650</session-timeout>
+						</session-config>
+					]]>
+                    </description>
+                    <link href="https://www.codejava.net/servers/tomcat/how-to-configure-session-timeout-in-tomcat" title="Configure session timeout in Tomcat"/>
+                    <tag>web-app</tag>
+                    <tag>weblogic</tag>
+					<tag>session</tag>
+                </classification>
+            </perform>
+        </rule>
+		<rule id="weblogic-xml-jsp-descriptor-12003" xmlns="http://windup.jboss.org/schema/jboss-ruleset">
+            <when>
+                <xmlfile matches="/bea:weblogic-web-app/bea:jsp-descriptor | /wlso:weblogic-web-app/wlso:jsp-descriptor | /wls:weblogic-web-app/wls:jsp-descriptor | /weblogic-web-app/jsp-descriptor">
+                    <namespace prefix="wlso" uri="http://xmlns.oracle.com/weblogic/weblogic-web-app"/>
+                    <namespace prefix="bea" uri="http://www.bea.com/ns/weblogic/90"/>
+                    <namespace prefix="wls" uri="http://www.bea.com/ns/weblogic/weblogic-web-app"/>
+                </xmlfile>
+            </when>
+            <perform>
+                <classification category-id="mandatory" effort="3" issue-display-mode="all" title="WebLogic web application descriptor (weblogic.xml) - jsp descriptor">
+                    <description><![CDATA[
+                        The Oracle WebLogic Server deployment descriptor file (`weblogic.xml`) provides functionality that is not included in the standard Java EE specification.
+                        While there is no direct mapping of these descriptor elements, many of these features may be configured in the application deployment or Tomcat server configuration files.
+
+                        The jsp-descriptor parameters in Weblogic are not supported in Tomcat
+						
+						In Tomcat
+
+						It is declared globally in $CATALINA_BASE/conf/web.xml. By default here is it's declaration:
+
+						<servlet>
+							<servlet-name>default</servlet-name>
+							<servlet-class>
+							  org.apache.catalina.servlets.DefaultServlet
+							</servlet-class>
+							<init-param>
+								<param-name>debug</param-name>
+								<param-value>0</param-value>
+							</init-param>
+							<init-param>
+								<param-name>listings</param-name>
+								<param-value>false</param-value>
+							</init-param>
+							<load-on-startup>1</load-on-startup>
+						</servlet>
+
+						...
+
+						<servlet-mapping>
+							<servlet-name>default</servlet-name>
+							<url-pattern>/</url-pattern>
+						</servlet-mapping>
+						
+					]]>
+                    </description>
+                    <link href="https://tomcat.apache.org/tomcat-7.0-doc/default-servlet.html" title="Apache Tomcat Default Servlet Reference"/>
+					<link href="https://cloud.google.com/appengine/docs/standard/java/config/webxml" title="The Deployment Descriptor: web.xml"/>
+                    <tag>web-app</tag>
+                    <tag>weblogic</tag>
+					<tag>jsp</tag>
+                </classification>
+            </perform>
+        </rule>
+		<rule id="weblogic-xml-class-loader-preference-12004" xmlns="http://windup.jboss.org/schema/jboss-ruleset">
+            <when>
+                <xmlfile matches="/bea:weblogic-web-app/bea:container-descriptor/bea:prefer-web-inf-classes | /wlso:weblogic-web-app/wlso:container-descriptor/wlso:prefer-web-inf-classes | /wls:weblogic-web-app/wls:container-descriptor/wls:prefer-web-inf-classes | /weblogic-web-app/container-descriptor/prefer-web-inf-classes">
+                    <namespace prefix="wlso" uri="http://xmlns.oracle.com/weblogic/weblogic-web-app"/>
+                    <namespace prefix="bea" uri="http://www.bea.com/ns/weblogic/90"/>
+                    <namespace prefix="wls" uri="http://www.bea.com/ns/weblogic/weblogic-web-app"/>
+                </xmlfile>
+            </when>
+            <perform>
+                <classification category-id="mandatory" effort="3" issue-display-mode="all" title="WebLogic web application descriptor (weblogic.xml) - class loading">
+                    <description><![CDATA[
+                        The Oracle WebLogic Server deployment descriptor file (`weblogic.xml`) provides functionality that is not included in the standard Java EE specification.
+                        While there is no direct mapping of these descriptor elements, many of these features may be configured in the application deployment or Tomcat server configuration files.
+
+                        The prefer-web-inf-classes parameter in Weblogic define the class loading preference. There is no equivalent configuration in Tomcat. 
+						
+						From Tomcat 8 onwards the order depends upon the folder structure:
+						
+						Briefly, the loading order is as follows:
+
+						bootstrap/system (JRE/lib, then server.loader)
+						webapp libraries (WEB-INF/classes, then WEB-INF/lib)
+						common libraries (common.loader, then Tomcat/lib)
+						webapp-shared libraries (shared.loader)
+						If you would like to guarantee that JAR X is loaded after JAR Y, then you'd need to put JAR X in one of the places which appears later in the listing above.
+
+						There are exceptions however, which are mentioned in the tomcat docs
+
+						Lastly, the web application class loader will always delegate first for JavaEE API classes for the specifications implemented by Tomcat (Servlet, JSP, EL, WebSocket). All other class loaders in Tomcat follow the usual delegation pattern.
+
+						That means if a webapp contains any JavaEE classes (javax.*), then it will be ignored by tomcat.
+
+						For each loader, the classes are just loaded by the JVM in the order whenever they needs to be imported/executed and are not loaded yet.
+											]]>
+                    </description>
+                    <link href="https://stackoverflow.com/questions/5474765/order-of-loading-jar-files-from-lib-directory" title="Stackoverflow: Order of loading jar files"/>
+					<link href="https://tomcat.apache.org/tomcat-9.0-doc/class-loader-howto.html#Class_Loader_Definitions" title="Tomcat Class Loader Definitions"/>
+                    <tag>web-app</tag>
+                    <tag>weblogic</tag>
+					<tag>session</tag>
+                </classification>
+            </perform>
+        </rule>
+     </rules>
+</ruleset>

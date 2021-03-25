@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<ruleset id="weblogic_ejb_jar_descriptor_01000"
+    xmlns="http://windup.jboss.org/schema/jboss-ruleset"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://windup.jboss.org/schema/jboss-ruleset http://windup.jboss.org/schema/jboss-ruleset/windup-jboss-ruleset.xsd">
+    <metadata>
+        <description>
+            This ruleset looks for the class-loading element in a jboss-web.xml file, which is no longer valid in JBoss EAP 6
+        </description>
+         <dependencies>
+            <addon id="org.jboss.windup.rules,windup-rules-javaee,2.4.0.Final"/>
+            <addon id="org.jboss.windup.rules,windup-rules-java,2.4.0.Final"/>
+        </dependencies>
+        <sourceTechnology id="weblogic" />
+        <targetTechnology id="tomcat" />
+    </metadata>
+    <rules>
+		<rule id="weblogic-ejb-jar-xml-descriptor-00001" xmlns="http://windup.jboss.org/schema/jboss-ruleset">
+            <when>
+                <or>
+                    <xmlfile matches="/weblogic-ejb-jar"/>
+                    <xmlfile matches="/wl9:weblogic-ejb-jar">
+                        <namespace prefix="wl9" uri="http://www.bea.com/ns/weblogic/90"/>
+                    </xmlfile>
+                    <xmlfile matches="/wl10:weblogic-ejb-jar">
+                        <namespace prefix="wl10" uri="http://www.bea.com/ns/weblogic/10.0"/>
+                    </xmlfile>
+                    <xmlfile matches="/wls:weblogic-ejb-jar">
+                        <namespace prefix="wls" uri="http://xmlns.oracle.com/weblogic/weblogic-ejb-jar"/>
+                    </xmlfile>
+                </or>
+            </when>
+            <perform>
+                <hint category-id="mandatory" effort="3" title="WebLogic EJB XML (weblogic-ejb-jar.xml)">
+                    <message>The application utilises the EJB API. There is no straight mapping between weblogic-ejbjar.xml to any particular component of tomcat, this has to do more with moving EJB Layer to Service component by using Spring / equivalent framework.
+					Removing use of the EJB API typically happens naturally as part of replacing EJBs with Spring managed components. Typically, it does not represent any additional migration cost.
+					The elements of proprietary `weblogic-ejb-jar.xml` descriptor need to be mapped according to the attached knowledge article.</message>
+                    <link href="https://access.redhat.com/articles/1326823" title="Migrate the weblogic-ejb-jar.xml"/>
+                    <tag>ejb</tag>
+                    <tag>configuration</tag>
+                    <tag>weblogic</tag>
+                </hint>
+            </perform>
+        </rule>
+		<rule id="weblogic-ejb-jar-xml-descriptor-00002" xmlns="http://windup.jboss.org/schema/jboss-ruleset">
+            <when>
+                    <xmlfile matches="/ejb-jar/enterprise-beans/entity"/>
+            </when>
+            <perform>
+                <hint category-id="mandatory" effort="3" title="WebLogic EJB - Entity beans">
+                    <message>The application utilises the EJB API. The application contains a number of classes that use DataSource transactions. Typically, no code changes are required, however, during the migration, 
+					you may want to consider using Spring's JdbcTemplate and transaction management to simplify the code.</message>
+                    <link href="http://static.springsource.org/spring/docs/3.1.x/spring-framework-reference/html/jdbc.html#jdbc-core" title="Spring JdbcTemplate"/>
+                    <tag>ejb</tag>
+                    <tag>configuration</tag>
+                    <tag>weblogic</tag>
+                </hint>
+            </perform>
+        </rule>
+		<rule id="weblogic-ejb-jar-xml-descriptor-00003" xmlns="http://windup.jboss.org/schema/jboss-ruleset">
+            <when>
+                    <xmlfile matches="/ejb-jar/enterprise-beans/session"/>
+            </when>
+            <perform>
+                <hint category-id="mandatory" effort="3" title="WebLogic EJB - Session beans">
+                    <message>The application utilises the EJB API. The application contains a number of stateless session beans. Typically, stateless session beans can be easily migrated to a Spring managed component.</message>
+                    <link href="http://static.springsource.org/spring/docs/3.1.x/spring-framework-reference/html/beans.html#beans-classpath-scanning" title="Spring Managed Components"/>
+                    <tag>ejb</tag>
+                    <tag>configuration</tag>
+                    <tag>weblogic</tag>
+                </hint>
+            </perform>
+        </rule>
+     </rules>
+</ruleset>

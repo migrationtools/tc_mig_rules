@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<ruleset id="weblogic_Tomcat_migration_windup_resources"
+    xmlns="http://windup.jboss.org/schema/jboss-ruleset"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://windup.jboss.org/schema/jboss-ruleset http://windup.jboss.org/schema/jboss-ruleset/windup-jboss-ruleset.xsd">
+    <metadata>
+        <description>
+             This ruleset provides analysis of WebLogic proprietary classes and constructs that may require individual attention when migrating to Tomcat
+        </description>
+        <dependencies>
+            <addon id="org.jboss.windup.rules,windup-rules-javaee,2.4.0.Final"/>
+            <addon id="org.jboss.windup.rules,windup-rules-java,2.4.0.Final"/>
+        </dependencies>
+        <sourceTechnology id="weblogic"/>
+        <targetTechnology id="tomcat"/>
+    </metadata>
+    <rules>
+        <rule id="weblogic_Tomcat_migration-cluster-00001">
+            <when>
+                <filecontent filename="MANIFEST.MF" pattern="Weblogic-Application-Version:" />
+            </when>
+            <perform>
+                <hint title="WebLogic side-by-side redeployment configuration" effort="3" category-id="mandatory">
+                    <message>
+                    <![CDATA[
+                      Oracle WebLogic Server includes a proprietary side-by-side production redeployment feature. For applications that meet certain requirements and restrictions, the new version of the application is deployed while the older version is still running.
+                      The old and new applications must be running on the same server or cluster. The new version of the application accepts new web session requests while the older version finishes processing requests already in process. Upon completion of the existing session requests, the older version of the application is then undeployed.
+
+                      In Tomcat, you can either deploy implement the cluster by simply adding 
+						<Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster"/>
+						to your <Engine> or your <Host> element in "server.xml" file to enable clustering. 
+						Use blow links for the additional info on the clustering in Tomcat.
+                      ]]>
+                    </message>
+                    <link href="https://tomcat.apache.org/tomcat-9.0-doc/cluster-howto.html#Cluster_Basics" title="Replace WebLogic side-by-side production redeployment Clustering/Session Replication in Tomcat" />
+					<link href="https://tomcat.apache.org/tomcat-8.5-doc/config/cluster.html" title="Apache Tomcat Cluster Configuration Reference" />
+                    <tag>weblogic</tag>
+                </hint>
+            </perform>
+        </rule>
+    </rules>
+</ruleset>

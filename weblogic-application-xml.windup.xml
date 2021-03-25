@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<ruleset id="weblogic_application_descriptor_01000"
+    xmlns="http://windup.jboss.org/schema/jboss-ruleset"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://windup.jboss.org/schema/jboss-ruleset http://windup.jboss.org/schema/jboss-ruleset/windup-jboss-ruleset.xsd">
+    <metadata>
+        <description>
+            This ruleset looks for the weblogic-application.xml file, which is not valid in Tomcat
+        </description>
+         <dependencies>
+            <addon id="org.jboss.windup.rules,windup-rules-javaee,2.4.0.Final"/>
+            <addon id="org.jboss.windup.rules,windup-rules-java,2.4.0.Final"/>
+        </dependencies>
+        <sourceTechnology id="weblogic" />
+        <targetTechnology id="tomcat" />
+    </metadata>
+    <rules>
+		<rule id="weblogic-application-xml-descriptor-01003" xmlns="http://windup.jboss.org/schema/jboss-ruleset">
+            <when>
+                <xmlfile matches="/*[local-name()='weblogic-application']/*[local-name()='application-param']"/>
+            </when>
+            <perform>
+                <classification category-id="mandatory" effort="1" issue-display-mode="all" title="WebLogic EAR application parameter (weblogic-application.xml)">
+                    <description><![CDATA[
+                    The `weblogic-application.xml` deployment descriptor file is used to describe Oracle WebLogic Server EAR archives. This file is not used in Tomcat. 
+					  
+					The <application-param> needs to be mapped to the web.xml <context-param> element:
+					You can configure named values that will be made visible to the web application as servlet context initialization parameters by nesting <Parameter> elements inside this element. For example, you can create an initialization parameter like this:
+
+						<Context>
+						  ...
+						  <Parameter name="companyName" value="My Company, Incorporated"
+								 override="false"/>
+						  ...
+						</Context>
+						This is equivalent to the inclusion of the following element in the web application deployment descriptor (/WEB-INF/web.xml):
+
+						<context-param>
+						  <param-name>companyName</param-name>
+						  <param-value>My Company, Incorporated</param-value>
+						</context-param>
+						but does not require modification of the deployment descriptor to customize this value]]>
+                    </description>
+                    <link href="https://tomcat.apache.org/tomcat-7.0-doc/config/context.html#Context_Parameters" title="Apache Tomcat Context Parameters"/>
+                    <tag>webservice</tag>
+                    <tag>weblogic</tag>
+					<tag>weblogic-application</tag>
+					<tag>application-param</tag>
+                </classification>
+            </perform>
+        </rule>
+     </rules>
+</ruleset>
